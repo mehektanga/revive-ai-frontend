@@ -33,6 +33,9 @@ export default function Home() {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [riskPolicy, setRiskPolicy] = useState<any>(null);
 
+  const [isLoading, setIsLoading] = useState(true);
+  const [apiError, setApiError] = useState<string | null>(null);
+
   const [selectedIncident, setSelectedIncident] = useState<any>(null);
   const [isIncidentModalOpen, setIsIncidentModalOpen] = useState(false);
   const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
@@ -40,8 +43,16 @@ export default function Home() {
 
   const refreshData = async () => {
     try {
-      const [dbRes, chartRes, incRes, campRes, auditRes, txRes, polRes] = await Promise.all([
-        api.getDashboard().catch(() => null),
+      const dbRes = await api.getDashboard();
+      setDashboardData(dbRes);
+      setApiError(null);
+    } catch (e: any) {
+      console.error('Dashboard API fetch error:', e);
+      setApiError(e?.message || 'Failed to fetch live data from backend API');
+    }
+
+    try {
+      const [chartRes, incRes, campRes, auditRes, txRes, polRes] = await Promise.all([
         api.getDashboardCharts().catch(() => null),
         api.getIncidents().catch(() => []),
         api.getCampaigns().catch(() => []),
@@ -50,7 +61,6 @@ export default function Home() {
         api.getRiskPolicy().catch(() => null)
       ]);
 
-      if (dbRes) setDashboardData(dbRes);
       if (chartRes) setChartData(chartRes);
       setIncidents(incRes || []);
       setCampaigns(campRes || []);
@@ -58,7 +68,9 @@ export default function Home() {
       setTransactions(txRes?.transactions || []);
       if (polRes) setRiskPolicy(polRes);
     } catch (e) {
-      console.error('Refresh error:', e);
+      console.error('Secondary API fetch error:', e);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -91,7 +103,12 @@ export default function Home() {
           {/* Overview Tab */}
           {activeTab === 'overview' && (
             <>
-              <KPICards data={dashboardData} />
+              <KPICards 
+                data={dashboardData} 
+                loading={isLoading}
+                error={apiError}
+                onRetry={refreshData}
+              />
               <SimulatorControls onRefresh={refreshData} isCompact={true} />
               <Charts chartData={chartData} />
 

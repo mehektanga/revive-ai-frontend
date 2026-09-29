@@ -3,8 +3,10 @@
  * Ensures exact backend route resolution using NEXT_PUBLIC_API_URL or fallback.
  */
 
+export const DEFAULT_BACKEND_URL = 'https://web-production-49943.up.railway.app';
+
 export const getApiUrl = (endpoint: string): string => {
-  let baseUrl = process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_URL || '';
+  let baseUrl = process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_URL || DEFAULT_BACKEND_URL;
   baseUrl = baseUrl.trim().replace(/\/+$/, ''); // Strip trailing slashes
 
   // If baseUrl already ends with /api, remove /api so we have a clean root domain
