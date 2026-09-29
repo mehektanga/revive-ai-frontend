@@ -11,13 +11,14 @@ interface RecoveryControlViewProps {
   onOpenIncidentDetail?: (inc: any) => void;
 }
 
+import { api } from '@/lib/api';
+
 export default function RecoveryControlView({ campaigns, incidents, onRefresh, onOpenIncidentDetail }: RecoveryControlViewProps) {
   const activeIncident = incidents.find((i) => i.status !== 'RESOLVED') || incidents[0];
   const [policy, setPolicy] = React.useState<any>(null);
 
   React.useEffect(() => {
-    fetch('/api/risk/policy')
-      .then((r) => r.json())
+    api.getRiskPolicy()
       .then((d) => setPolicy(d))
       .catch((e) => console.error(e));
   }, []);

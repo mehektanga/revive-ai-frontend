@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Sparkles, Send, X, Terminal, Database } from 'lucide-react';
 
+import { api } from '@/lib/api';
+
 interface CommandCenterBarProps {
   isOpen: boolean;
   onClose: () => void;
@@ -27,12 +29,7 @@ export default function CommandCenterBar({ isOpen, onClose }: CommandCenterBarPr
     setLoading(true);
     setResponse(null);
     try {
-      const res = await fetch('/api/agent/query', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: q })
-      });
-      const data = await res.json();
+      const data = await api.queryAgent({ query: q });
       setResponse(data);
     } catch (e) {
       console.error(e);

@@ -6,6 +6,8 @@ interface SimulatorControlsProps {
   isCompact?: boolean;
 }
 
+import { api } from '@/lib/api';
+
 export default function SimulatorControls({ onRefresh, isCompact = false }: SimulatorControlsProps) {
   const [scenario, setScenario] = useState('UPI_DEGRADATION');
   const [isRunning, setIsRunning] = useState(false);
@@ -58,8 +60,7 @@ export default function SimulatorControls({ onRefresh, isCompact = false }: Simu
 
   const fetchStream = async () => {
     try {
-      const res = await fetch('/api/simulator/stream');
-      const data = await res.json();
+      const data = await api.getSimulatorStream();
       setStreamEvents(data || []);
     } catch (e) {
       console.error(e);
@@ -75,11 +76,7 @@ export default function SimulatorControls({ onRefresh, isCompact = false }: Simu
   const handleStart = async () => {
     setIsRunning(true);
     try {
-      await fetch('/api/simulator/start', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ scenario, tpm: 60 })
-      });
+      await api.startSimulator({ scenario, tpm: 60 });
       fetchStream();
       onRefresh();
     } catch (e) {
@@ -90,7 +87,7 @@ export default function SimulatorControls({ onRefresh, isCompact = false }: Simu
   const handleStop = async () => {
     setIsRunning(false);
     try {
-      await fetch('/api/simulator/stop', { method: 'POST' });
+      await api.stopSimulator();
     } catch (e) {
       console.error(e);
     }
@@ -99,7 +96,7 @@ export default function SimulatorControls({ onRefresh, isCompact = false }: Simu
   const handleReset = async () => {
     setIsRunning(false);
     try {
-      await fetch('/api/simulator/reset', { method: 'POST' });
+      await api.resetSimulator();
       fetchStream();
       onRefresh();
     } catch (e) {

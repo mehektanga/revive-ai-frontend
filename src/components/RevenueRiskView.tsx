@@ -2,13 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { TrendingDown, ShieldAlert, ArrowUpRight, AlertCircle, Layers } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
+import { api } from '@/lib/api';
+
 export default function RevenueRiskView() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/risk/analytics')
-      .then((res) => res.json())
+    api.getRiskAnalytics()
       .then((d) => {
         setData(d);
         setLoading(false);

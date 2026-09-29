@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Sliders, ShieldCheck, CheckCircle2, AlertTriangle, Save } from 'lucide-react';
 
+import { api } from '@/lib/api';
+
 export default function SettingsView() {
   const [maxExposure, setMaxExposure] = useState(200000);
   const [autoApprove, setAutoApprove] = useState(100000);
@@ -13,8 +15,7 @@ export default function SettingsView() {
 
   const fetchPolicy = async () => {
     try {
-      const res = await fetch('/api/risk/policy');
-      const data = await res.json();
+      const data = await api.getRiskPolicy();
       if (data) {
         setMaxExposure(data.max_monetary_exposure || 200000);
         setAutoApprove(data.require_human_approval_above_exposure || 100000);
@@ -36,20 +37,14 @@ export default function SettingsView() {
     setSaving(true);
     setSuccessMsg('');
     try {
-      const res = await fetch('/api/risk/policy', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          max_monetary_exposure: Number(maxExposure),
-          require_human_approval_above_exposure: Number(autoApprove),
-          max_failure_rate_threshold: Number(failThreshold),
-          max_transaction_count: Number(maxTxs)
-        })
+      await api.updateRiskPolicy({
+        max_monetary_exposure: Number(maxExposure),
+        require_human_approval_above_exposure: Number(autoApprove),
+        max_failure_rate_threshold: Number(failThreshold),
+        max_transaction_count: Number(maxTxs)
       });
-      if (res.ok) {
-        setSuccessMsg('Merchant risk policy limits successfully saved to database!');
-        setTimeout(() => setSuccessMsg(''), 4000);
-      }
+      setSuccessMsg('Merchant risk policy limits successfully saved to database!');
+      setTimeout(() => setSuccessMsg(''), 4000);
     } catch (e) {
       console.error(e);
     } finally {

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { X, Play, CheckCircle2, AlertTriangle, ShieldCheck, RefreshCw, Sparkles, Layers } from 'lucide-react';
 
+import { api } from '@/lib/api';
+
 interface HackathonDemoModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -39,8 +41,7 @@ export default function HackathonDemoModal({ isOpen, onClose, onRefresh }: Hacka
     }
 
     try {
-      const res = await fetch('/api/demo/run', { method: 'POST' });
-      const data = await res.json();
+      const data = await api.runDemo();
       setDemoResults(data);
       setCurrentStep(11);
       onRefresh();

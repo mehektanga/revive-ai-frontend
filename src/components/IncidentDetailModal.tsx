@@ -11,6 +11,8 @@ interface IncidentDetailModalProps {
   onRefresh: () => void;
 }
 
+import { api } from '@/lib/api';
+
 export default function IncidentDetailModal({ isOpen, onClose, incident, onRefresh }: IncidentDetailModalProps) {
   const [selectedStrategy, setSelectedStrategy] = useState('delayed_retry');
   const [isEvaluating, setIsEvaluating] = useState(false);
@@ -23,8 +25,7 @@ export default function IncidentDetailModal({ isOpen, onClose, incident, onRefre
 
   React.useEffect(() => {
     if (isOpen && incident?.id) {
-      fetch(`/api/incidents/${incident.id}`)
-        .then((r) => r.json())
+      api.getIncidentDetail(incident.id)
         .then((d) => {
           setIncidentDetail(d);
           handleCreatePlan('delayed_retry');
@@ -96,15 +97,10 @@ export default function IncidentDetailModal({ isOpen, onClose, incident, onRefre
     setSelectedStrategy(stratCode);
     setIsEvaluating(true);
     try {
-      const res = await fetch('/api/recovery/plan', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          incident_id: incident.id,
-          strategy_code: stratCode
-        })
+      const data = await api.createRecoveryPlan({
+        incident_id: incident.id,
+        strategy_code: stratCode
       });
-      const data = await res.json();
       setPlan(data);
     } catch (e) {
       console.error(e);
@@ -117,31 +113,30 @@ export default function IncidentDetailModal({ isOpen, onClose, incident, onRefre
     setExecuting(true);
     setProgress(15);
     try {
-      let campaignId = plan ? plan.campaign_id : 1;
+      let activePlan = plan;
+      if (!activePlan || !activePlan.campaign_id) {
+        activePlan = await api.createRecoveryPlan({
+          incident_id: incident.id,
+          strategy_code: selectedStrategy
+        });
+        setPlan(activePlan);
+      }
+      let campaignId = activePlan.campaign_id;
 
       // 1. Approve
-      await fetch('/api/recovery/approve', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          campaign_id: campaignId,
-          action: 'APPROVE',
-          reason: 'Merchant explicitly approved risk exposure plan'
-        })
+      await api.approveRecoveryCampaign({
+        campaign_id: campaignId,
+        action: 'APPROVE',
+        reason: 'Merchant explicitly approved risk exposure plan'
       });
 
       setProgress(45);
 
       // 2. Execute
-      const execRes = await fetch('/api/recovery/execute', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          campaign_id: campaignId,
-          trigger_controlled_failure: triggerControlledFailure
-        })
+      const execData = await api.executeRecovery({
+        campaign_id: campaignId,
+        trigger_controlled_failure: triggerControlledFailure
       });
-      const execData = await execRes.json();
       setProgress(100);
       setExecResult(execData);
       onRefresh();

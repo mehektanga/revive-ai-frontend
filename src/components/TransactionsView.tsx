@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Receipt, Search, Filter, X, ChevronLeft, ChevronRight } from 'lucide-react';
 
+import { api } from '@/lib/api';
+
 export default function TransactionsView() {
   const [data, setData] = useState<any>(null);
   const [page, setPage] = useState(1);
@@ -14,16 +16,14 @@ export default function TransactionsView() {
   const fetchTxs = async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: '25',
+      const json = await api.getTransactions({
+        page,
+        limit: 25,
         status,
         payment_method: method,
         provider,
         search
       });
-      const res = await fetch(`/api/transactions?${params}`);
-      const json = await res.json();
       setData(json);
     } catch (e) {
       console.error(e);

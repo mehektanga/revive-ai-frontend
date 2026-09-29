@@ -21,6 +21,8 @@ import {
   ShieldCheck, CheckCircle2, Sliders, Receipt
 } from 'lucide-react';
 
+import { api } from '@/lib/api';
+
 export default function Home() {
   const [activeTab, setActiveTab] = useState('overview');
   const [dashboardData, setDashboardData] = useState<any>(null);
@@ -39,24 +41,24 @@ export default function Home() {
   const refreshData = async () => {
     try {
       const [dbRes, chartRes, incRes, campRes, auditRes, txRes, polRes] = await Promise.all([
-        fetch('/api/dashboard').then((r) => r.json()),
-        fetch('/api/dashboard/charts').then((r) => r.json()),
-        fetch('/api/incidents').then((r) => r.json()),
-        fetch('/api/recovery/campaigns').then((r) => r.json()),
-        fetch('/api/audit').then((r) => r.json()),
-        fetch('/api/transactions?limit=25').then((r) => r.json()),
-        fetch('/api/risk/policy').then((r) => r.json())
+        api.getDashboard().catch(() => null),
+        api.getDashboardCharts().catch(() => null),
+        api.getIncidents().catch(() => []),
+        api.getCampaigns().catch(() => []),
+        api.getAuditTrail().catch(() => []),
+        api.getTransactions({ limit: 25 }).catch(() => ({ transactions: [] })),
+        api.getRiskPolicy().catch(() => null)
       ]);
 
-      setDashboardData(dbRes);
-      setChartData(chartRes);
+      if (dbRes) setDashboardData(dbRes);
+      if (chartRes) setChartData(chartRes);
       setIncidents(incRes || []);
       setCampaigns(campRes || []);
       setAuditLogs(auditRes || []);
-      setTransactions(txRes.transactions || []);
-      setRiskPolicy(polRes);
+      setTransactions(txRes?.transactions || []);
+      if (polRes) setRiskPolicy(polRes);
     } catch (e) {
-      console.error(e);
+      console.error('Refresh error:', e);
     }
   };
 

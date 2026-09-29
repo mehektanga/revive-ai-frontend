@@ -2,13 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { BarChart3, ShieldCheck, Target, Cpu, CheckCircle, Database } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
+import { api } from '@/lib/api';
+
 export default function AnalyticsView() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/analytics')
-      .then((res) => res.json())
+    api.getAnalytics()
       .then((d) => {
         setData(d);
         setLoading(false);
